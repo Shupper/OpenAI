@@ -12,6 +12,8 @@
     <OutputPath>.</OutputPath>
     <Name>OpenAi</Name>
     <RootNamespace>OpenAi</RootNamespace>
+    <InterpreterId>{131efcd5-b802-4652-8089-10b02a1684a4}</InterpreterId>
+    <InterpreterVersion>2.7</InterpreterVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
     <DebugSymbols>true</DebugSymbols>
@@ -23,6 +25,9 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="OpenAi.py" />
+  </ItemGroup>
+  <ItemGroup>
+    <InterpreterReference Include="{131efcd5-b802-4652-8089-10b02a1684a4}\2.7" />
   </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>
