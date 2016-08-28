@@ -24,6 +24,9 @@
     <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="migrated code.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="OpenAi.py" />
   </ItemGroup>
   <ItemGroup>
