@@ -23,17 +23,16 @@ for _ in range(10):
 
 import numpy as np
 
-NCount = 30000
-HdCount = 5
+NCount = 4
+HdCount = 4
 
 input = np.random.random((1,NCount))
-
 synapseWeights = np.random.random((NCount,HdCount))
 
-#print x
-#print y
+print input
+print synapseWeights
 
-output = np.dot(x,y)
+output = np.dot(input,synapseWeights)
 
 print output
 
