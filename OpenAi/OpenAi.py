@@ -12,6 +12,7 @@ import Box2D
 def MatrixMutate(v, prob):
 
     p = np.copy(v)
+    changeTrackerMatrix = np.zeros_like(v)
 
     for c in range(len(p)):
 
@@ -19,8 +20,9 @@ def MatrixMutate(v, prob):
 
             if prob > random.uniform(0,1):
                 p[c][r] = random.uniform(-1,1)
+                changeTrackerMatrix[c][r]= 1
 
-    return p
+    return p, changeTrackerMatrix
 
 def applyThreshold(value, threshold):
 
@@ -40,24 +42,35 @@ def getAction(input,synapseWeights, type): # 1=Discrete, 2=Box Discrete, 3=Box C
     else:
         return output
 
-def testFitness(env, synapseWeights, actionType, showPlay=False):
+def testFitness(env, synapseWeights, actionType, avgCount, showPlay=False ):
 
-    cuReward = 0.0
-    observation = env.reset()
-    input = observation.flatten()
-    action = getAction(input,synapseWeights,actionType)
+    RewardBeforeAvg = 0.0
 
-    for i in range(1000):
-        if(showPlay): env.render() # uncomment to see the graphic
-        observation, reward, done, info = env.step(action)
-        cuReward = cuReward + reward
+    for averageit in range(avgCount):
+
+        cuReward = 0.0
+        observation = env.reset()
         input = observation.flatten()
         action = getAction(input,synapseWeights,actionType)
-        #print action
-        if done:
-            print("Episode finished after {} timesteps".format(i + 1))
-            break 
-    return cuReward
+
+        for i in range(1000):
+            if(showPlay): env.render() # uncomment to see the graphic
+            observation, reward, done, info = env.step(action)
+            cuReward = cuReward + reward
+            input = observation.flatten()
+            action = getAction(input,synapseWeights,actionType)
+            #print action
+            if done:
+                #print("Episode finished after {} timesteps".format(i + 1))
+                break 
+
+        RewardBeforeAvg = RewardBeforeAvg + cuReward
+
+        # Break out of averaging loop if result not good enough
+        #if cuReward<bailThreshold:
+        #    return RewardBeforeAvg/(averageit+1)
+              
+    return RewardBeforeAvg/(averageit+1)
 
 import numpy as np
 
@@ -69,9 +82,18 @@ MAX_GENERATIONS = 1000
 MUTATE_PROBABILITY = 0.2 # How much to randomly mutate weights
 
 filename = 'C:\\temp\\acrobot-v0-2' 
+
+env = gym.make('LunarLander-v2')
 NCount = 8 #Based on observation space
 HdCount = 3 #Based on action space
-env = gym.make('LunarLander-v2')
+
+#env = gym.make('CartPole-v0')
+#NCount = 4 #Based on observation space
+#HdCount = 2 #Based on action space
+
+#env = gym.make('Acrobot-v1')
+#NCount = 6 #Based on observation space
+#HdCount = 3 #Based on action space
 
 print(env.observation_space.low)
 print(env.observation_space.high)
@@ -80,18 +102,30 @@ for ii in range(10):
 
 #Start the training
 parentSynapseWeights = np.random.uniform(-1,1,(NCount,HdCount))
-currBestReward = 0.0
+influenceMatrix = np.zeros_like(parentSynapseWeights)
 
 env.monitor.start(filename,video_callable=lambda i : False,force=True)
-parentFitness = -1000
+parentFitness = testFitness(env, parentSynapseWeights,1,5)
+currBestReward = parentFitness
 
 #Main evo loop
 for currentGeneration in range(MAX_GENERATIONS):
         
-    childSynapseWeights = MatrixMutate(parentSynapseWeights,MUTATE_PROBABILITY)
+    childSynapseWeights, changeTrackerMatrix = MatrixMutate(parentSynapseWeights,MUTATE_PROBABILITY)
    
-    childFitness = testFitness(env, childSynapseWeights,1)
+    #print changeTrackerMatrix
+
+    childFitness = testFitness(env, childSynapseWeights,1,5)
     #childFitness = AIFitness(env,child,AVERAGE_N_COUNT,MIN_SCORE_ALLOWED)
+
+    fitnessDelta = (childFitness-parentFitness)
+
+    improvementFactorMatrix = np.empty(np.shape(parentSynapseWeights))
+    improvementFactorMatrix.fill(fitnessDelta)
+
+    influenceMatrix= influenceMatrix + (improvementFactorMatrix*changeTrackerMatrix)
+
+    print influenceMatrix
 
     print "Parent", parentFitness,"Child",childFitness
 
@@ -105,7 +139,7 @@ for currentGeneration in range(MAX_GENERATIONS):
 
 for aa in range(5):
     raw_input("Press Enter to continue...")
-    print testFitness(env, parentSynapseWeights,1,True)
+    print testFitness(env, parentSynapseWeights,1,5,True)
 
 
 
